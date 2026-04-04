@@ -1,13 +1,26 @@
-body {
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root {
+  width: 100%;
+  min-height: 100vh;
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  padding: 0;
+  overflow-x: hidden;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+@keyframes scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(calc(-344px * 6)); }
+}
+
+.animate-scroll {
+  display: flex;
+  width: max-content;
+  animation: scroll 35s linear infinite;
+}
+
+.pause-on-hover:hover .animate-scroll {
+  animation-play-state: paused;
 }
