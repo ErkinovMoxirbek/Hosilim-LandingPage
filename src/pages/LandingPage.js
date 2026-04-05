@@ -10,6 +10,7 @@ const navItems = [
   { id: 'problems', label: 'Yangi tizim' },
   { id: 'features', label: 'Imkoniyatlar' },
   { id: 'benefits', label: 'Tizim afzalliklari' },
+  { id: 'pricing', label: 'Tariflar' }, 
   { id: 'contact', label: 'Bog\'lanish' }
 ];
 
@@ -71,7 +72,7 @@ const pricingData = [
       { text: "Buxgalter xizmati", included: true },
       { text: "Cheklangan arxiv", included: true },
       { text: "Xolodelnik nazorati", included: false },
-      { text: "Hosil ilovasi (Bonus)", included: false },
+      { text: "Hosilim ilovasi (Bonus)", included: false },
     ],
     theme: "light",
   },
@@ -85,7 +86,7 @@ const pricingData = [
       { text: "Buxgalter xizmati", included: true },
       { text: "Cheklangan arxiv", included: true },
       { text: "Xolodelnik nazorati", included: true },
-      { text: "Hosil ilovasi (Bonus)", included: false },
+      { text: "Hosilim ilovasi (Bonus)", included: false },
     ],
     theme: "primary",
   },
@@ -99,7 +100,7 @@ const pricingData = [
       { text: "Buxgalter xizmati", included: true },
       { text: "Cheklanmagan arxiv", included: true },
       { text: "Xolodelnik nazorati", included: true },
-      { text: "Hosil ilovasi (Bonus)", included: true },
+      { text: "Hosilim ilovasi (Bonus)", included: true },
     ],
     theme: "dark",
   }
@@ -180,25 +181,30 @@ const HosilimLanding = () => {
     if (isPricingPageOpen) return;
     const el = bTrackRef.current;
     if (!el) return;
+    
     const updateWidth = () => {
       const child = el.children[0];
       if (child) {
-        bItemWidth.current = child.offsetWidth + 24; 
+        const gap = window.innerWidth >= 640 ? 24 : 16; 
+        bItemWidth.current = child.offsetWidth + gap; 
         bCurrentX.current = -benefitsData.length * bItemWidth.current;
         bTargetX.current = bCurrentX.current;
       }
     };
     updateWidth();
     window.addEventListener('resize', updateWidth);
+    
     const loop = () => {
       if (!bItemWidth.current) {
         bAnimRef.current = requestAnimationFrame(loop);
         return;
       }
       const SET_WIDTH = benefitsData.length * bItemWidth.current;
+      
       if (!bIsDragging.current) {
         bCurrentX.current += (bTargetX.current - bCurrentX.current) * 0.15;
       }
+      
       if (bTargetX.current > -SET_WIDTH + bItemWidth.current) {
         bTargetX.current -= SET_WIDTH;
         bCurrentX.current -= SET_WIDTH;
@@ -206,14 +212,20 @@ const HosilimLanding = () => {
         bTargetX.current += SET_WIDTH;
         bCurrentX.current += SET_WIDTH;
       }
+      
       const currentFloatIndex = -bCurrentX.current / bItemWidth.current;
       const activeIdx = Math.round(currentFloatIndex);
       const realIndex = ((activeIdx % benefitsData.length) + benefitsData.length) % benefitsData.length;
       setBActiveDot(realIndex);
+      
       if (bTrackRef.current) {
-        const screenWidth = document.documentElement.clientWidth || window.innerWidth;
-        const centerOffset = screenWidth / 2 - bItemWidth.current / 2;
+        const screenWidth = window.innerWidth;
+        const gap = screenWidth >= 640 ? 24 : 16;
+        const cardWidth = bItemWidth.current - gap;
+        const centerOffset = (screenWidth / 2) - (cardWidth / 2);
+        
         bTrackRef.current.style.transform = `translate3d(${bCurrentX.current + centerOffset}px, 0, 0)`;
+        
         Array.from(bTrackRef.current.children).forEach((child, i) => {
           const distance = Math.abs(currentFloatIndex - i);
           const scale = Math.max(1 - distance * 0.15, 0.85); 
@@ -238,7 +250,7 @@ const HosilimLanding = () => {
       window.removeEventListener('resize', updateWidth);
       cancelAnimationFrame(bAnimRef.current);
     };
-  }, [isPricingPageOpen, isDark]); // isDark ga qarab fizika ham yangilanadi
+  }, [isPricingPageOpen, isDark]);
 
   useEffect(() => {
     if (isPricingPageOpen) return;
@@ -253,16 +265,19 @@ const HosilimLanding = () => {
     if (!isPricingPageOpen) return;
     const el = pTrackRef.current;
     if (!el) return;
+    
     const updateWidth = () => {
       const child = el.children[0];
       if (child) {
-        pItemWidth.current = child.offsetWidth + 24; 
+        const gap = window.innerWidth >= 640 ? 24 : 16; 
+        pItemWidth.current = child.offsetWidth + gap; 
         pCurrentX.current = -(pricingData.length + 1) * pItemWidth.current;
         pTargetX.current = pCurrentX.current;
       }
     };
     updateWidth();
     window.addEventListener('resize', updateWidth);
+    
     const loop = () => {
       if (!pItemWidth.current) {
         pAnimRef.current = requestAnimationFrame(loop);
@@ -283,10 +298,15 @@ const HosilimLanding = () => {
       const activeIdx = Math.round(currentFloatIndex);
       const realIndex = ((activeIdx % pricingData.length) + pricingData.length) % pricingData.length;
       setPActiveDot(realIndex);
+      
       if (pTrackRef.current) {
-        const screenWidth = document.documentElement.clientWidth || window.innerWidth;
-        const centerOffset = screenWidth / 2 - pItemWidth.current / 2;
+        const screenWidth = window.innerWidth;
+        const gap = screenWidth >= 640 ? 24 : 16;
+        const cardWidth = pItemWidth.current - gap;
+        const centerOffset = (screenWidth / 2) - (cardWidth / 2);
+        
         pTrackRef.current.style.transform = `translate3d(${pCurrentX.current + centerOffset}px, 0, 0)`;
+        
         Array.from(pTrackRef.current.children).forEach((child, i) => {
           const distance = Math.abs(currentFloatIndex - i);
           const scale = Math.max(1 - distance * 0.15, 0.85); 
@@ -338,9 +358,9 @@ const HosilimLanding = () => {
     setMobileOpen(false);
   };
   
+  // Tashqi linkga yo'naltirish
   const handleAuth = () => {
-    const token = localStorage.getItem('authToken');
-    navigate(token ? '/dashboard' : '/auth');
+    window.location.href = 'https://www.my.hosilim.uz/dashboard';
   };
 
   return (
@@ -348,7 +368,6 @@ const HosilimLanding = () => {
       className={`min-h-screen font-sans overflow-x-hidden relative bg-cover bg-center bg-fixed transition-colors duration-500 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}
       style={{ backgroundImage: "url('/assets/peach.jpg')" }}
     >
-      {/* 🌙 ORQA FON PARDA: Kun bo'lsa oqish-xira, Tun bo'lsa qoramtir-xira */}
       <div className={`fixed inset-0 transition-colors duration-500 z-0 pointer-events-none ${isDark ? 'bg-gray-900/40 backdrop-blur-[4px]' : 'bg-white/40 backdrop-blur-[8px]'}`}></div>
 
       {isPricingPageOpen ? (
@@ -387,7 +406,7 @@ const HosilimLanding = () => {
               onTouchStart={(e) => onPMouseDown({ pageX: e.touches[0].pageX })}
               onTouchMove={(e) => onPMouseMove({ pageX: e.touches[0].pageX })} onTouchEnd={onPMouseUp}
             >
-              <div ref={pTrackRef} className="flex gap-4 sm:gap-6 w-max will-change-transform py-4 items-center px-4 sm:px-0">
+              <div ref={pTrackRef} className="flex gap-4 sm:gap-6 w-max will-change-transform py-4 items-center">
                 {infinitePricing.map((item, idx) => {
                   let boxClasses = isDark ? "bg-white/10 border-white/20 text-white" : "bg-white/60 border-white/60 text-gray-900";
                   let btnClasses = isDark ? "bg-white text-gray-900 hover:bg-gray-100" : "bg-gray-900 text-white hover:bg-gray-800";
@@ -479,14 +498,17 @@ const HosilimLanding = () => {
                 
                 <nav className="hidden md:flex items-center gap-6">
                   {navItems.map(item => (
-                    <button key={item.id} onClick={() => scrollToSection(item.id)} className={`text-[13px] font-bold uppercase tracking-tight drop-shadow-sm transition-colors ${isDark ? 'text-white/90 hover:text-green-400' : 'text-gray-800 hover:text-green-600'}`}>
+                    <button 
+                      key={item.id} 
+                      onClick={() => item.id === 'pricing' ? setIsPricingPageOpen(true) : scrollToSection(item.id)} 
+                      className={`text-[13px] font-bold uppercase tracking-tight drop-shadow-sm transition-colors ${isDark ? 'text-white/90 hover:text-green-400' : 'text-gray-800 hover:text-green-600'}`}
+                    >
                       {item.label}
                     </button>
                   ))}
                 </nav>
 
                 <div className="flex items-center gap-2 sm:gap-4">
-                  {/* ☀️🌙 KUN VA TUN TUGMASI */}
                   <button 
                     onClick={() => setIsDark(!isDark)} 
                     className={`p-2 rounded-full transition-all hover:scale-110 active:scale-95 ${isDark ? 'bg-white/10 text-yellow-400 hover:bg-white/20' : 'bg-gray-900/10 text-gray-700 hover:bg-gray-900/20'}`}
@@ -510,20 +532,24 @@ const HosilimLanding = () => {
             </div>
           </div>
 
-          <div className={`w-full h-7 flex items-center shadow-md transition-all duration-500 relative z-40 border-b md:hidden ${scrolled ? (isDark ? 'bg-black/80 backdrop-blur-xl border-white/5' : 'bg-white/90 backdrop-blur-xl border-white/40') : (isDark ? 'bg-black/30 backdrop-blur-md border-white/5' : 'bg-white/50 backdrop-blur-md border-white/40')}`}>
-            <div className="w-full flex justify-center items-center px-4">
-               <span className={`text-[10px] font-medium block text-center w-full drop-shadow-sm ${isDark ? 'text-white/90' : 'text-gray-800'}`}>
-                 O'zbekistondagi yagona platforma
-               </span>
-            </div>
-          </div>
-
           {/* Mobil menyu */}
           {mobileOpen && (
             <div className={`md:hidden w-full backdrop-blur-xl border-b shadow-2xl p-4 absolute top-full left-0 mt-0.5 ${isDark ? 'bg-gray-900/95 border-white/10' : 'bg-white/95 border-gray-200'}`}>
                <nav className="flex flex-col gap-4">
                 {navItems.map(item => (
-                  <button key={item.id} onClick={() => scrollToSection(item.id)} className={`text-left text-[14px] font-bold uppercase tracking-tight py-2 border-b last:border-0 transition-colors ${isDark ? 'text-white hover:text-green-400 border-white/10' : 'text-gray-800 hover:text-green-600 border-gray-100'}`}>
+                  <button 
+                    key={item.id} 
+                    onClick={() => {
+                      if (item.id === 'pricing') {
+                        setIsPricingPageOpen(true);
+                        setMobileOpen(false);
+                      } else {
+                        scrollToSection(item.id);
+                        setMobileOpen(false);
+                      }
+                    }} 
+                    className={`text-left text-[14px] font-bold uppercase tracking-tight py-2 border-b last:border-0 transition-colors ${isDark ? 'text-white hover:text-green-400 border-white/10' : 'text-gray-800 hover:text-green-600 border-gray-100'}`}
+                  >
                     {item.label}
                   </button>
                 ))}
@@ -536,8 +562,11 @@ const HosilimLanding = () => {
         {/* ASOSIY EKRAN (HERO) */}
         <section className="pb-16 sm:pb-20 px-4 text-center relative min-h-[90vh] flex flex-col justify-start">
           <div className="relative z-10">
-            <div className={`inline-flex items-center gap-2 px-3 sm:px-4 py-2 backdrop-blur-md border rounded-full text-xs sm:text-sm font-bold mb-6 sm:mb-8 shadow-lg cursor-default transition-all ${isDark ? 'bg-white/10 border-white/20 text-green-300 hover:bg-white/20' : 'bg-white/60 border-white/60 text-green-700 hover:bg-white/80'}`}>
-                <CheckCircle2 size={16} /> O'zbekistondagi yagona bog'dorchilikni raqamlashtirish platformasi.
+            
+            {/* 🚀 ROZETKA (BADGE) TELEFONDA IXCHAMLASHDI (Ramkasi kichraydi) */}
+            <div className={`inline-flex items-center gap-1.5 sm:gap-2 px-2.5 py-1.5 sm:px-4 sm:py-2 backdrop-blur-md border rounded-2xl sm:rounded-full text-xs sm:text-sm font-bold mb-6 sm:mb-8 shadow-lg cursor-default transition-all mx-auto w-fit max-w-full ${isDark ? 'bg-white/10 border-white/20 text-green-300 hover:bg-white/20' : 'bg-white/60 border-white/60 text-green-700 hover:bg-white/80'}`}>
+                <CheckCircle2 className="w-4 h-4 shrink-0" /> 
+                <span className="leading-tight">O'zbekistondagi yagona bog'dorchilikni raqamlashtirish platformasi.</span>
             </div>
             
             <h1 className={`text-3xl sm:text-5xl md:text-6xl font-black mb-6 leading-tight max-w-5xl mx-auto drop-shadow-xl ${isDark ? 'text-white' : 'text-gray-900'}`}>
@@ -549,7 +578,7 @@ const HosilimLanding = () => {
               Yo'qolgan ma'lumotlar, daftardagi xatolar va soatlab vaqt sarflanadigan hisob-kitoblarga barham bering. Barchasi uchun ushbu platforma yetarli.
             </p>
             
-            <button onClick={() => setIsPricingPageOpen(true)} className="px-6 sm:px-8 py-3 sm:py-4 bg-green-600 text-white font-bold rounded-xl shadow-xl shadow-green-600/30 flex items-center gap-2 mx-auto hover:bg-green-500 transition-all hover:-translate-y-1 text-sm sm:text-base border border-green-500/50">
+            <button onClick={handleAuth} className="px-6 sm:px-8 py-3 sm:py-4 bg-green-600 text-white font-bold rounded-xl shadow-xl shadow-green-600/30 flex items-center gap-2 mx-auto hover:bg-green-500 transition-all hover:-translate-y-1 text-sm sm:text-base border border-green-500/50">
               Hoziroq boshlash <ArrowRight size={20} />
             </button>
 
@@ -566,7 +595,7 @@ const HosilimLanding = () => {
                           <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-yellow-400"></div>
                           <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-green-400"></div>
                         </div>
-                        <div className="text-[10px] sm:text-xs font-bold text-gray-400 text-left">Hosil.uz / Broker Dashboard</div>
+                        <div className="text-[10px] sm:text-xs font-bold text-gray-400 text-left">Hosilim.uz / Broker Dashboard</div>
                       </div>
 
                       <div className="flex-1 flex p-4 md:p-6 gap-6 bg-gray-50">
@@ -710,7 +739,7 @@ const HosilimLanding = () => {
             onTouchStart={(e) => onBMouseDown({ pageX: e.touches[0].pageX })}
             onTouchMove={(e) => onBMouseMove({ pageX: e.touches[0].pageX })} onTouchEnd={onBMouseUp}
           >
-            <div ref={bTrackRef} className="flex gap-4 sm:gap-6 w-max will-change-transform py-6 sm:py-10 px-4 sm:px-0 items-center">
+            <div ref={bTrackRef} className="flex gap-4 sm:gap-6 w-max will-change-transform py-6 sm:py-10 items-center">
               {infiniteBenefits.map((item, idx) => (
                 <div 
                   key={idx}
