@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-
 import {
   Calculator, Warehouse, TrendingUp, CheckCircle2, Menu, X, ArrowRight,
   ShieldCheck, Truck, Box, XOctagon, Clock, Printer, History, Users, MonitorSmartphone,
-  Play, Pause
+  Play, Pause, ArrowUpRight
 } from 'lucide-react';
 
 const navItems = [
@@ -114,6 +113,11 @@ const HosilimLanding = () => {
   const [scrolled, setScrolled] = useState(false);
   const [isPricingPageOpen, setIsPricingPageOpen] = useState(false);
 
+  // 🚀 3D ORBITA (Uchburchak aylanma) UCHUN STATE VA REFLAR
+  const [orbitAngle, setOrbitAngle] = useState(0);
+  const isOrbitHeld = useRef(false); // Faqat bosilganda to'xtashi uchun ref
+  const orbitRequestRef = useRef();
+
   // Fizika statelari...
   const trackRef = useRef(null);
   const animationRef = useRef(null);
@@ -151,7 +155,18 @@ const HosilimLanding = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // 🚀 MAXSUS: Telefon va Sichqoncha harakatini aniq o'quvchi funksiya
+  // 🚀 ORBITA ANIMATSIYASI (Faqat ushlab turilganda to'xtaydi)
+  useEffect(() => {
+    const animateOrbit = () => {
+      if (!isOrbitHeld.current) {
+        setOrbitAngle((prevAngle) => (prevAngle + 0.3) % 360); // Aylanish tezligi (0.3)
+      }
+      orbitRequestRef.current = requestAnimationFrame(animateOrbit);
+    };
+    orbitRequestRef.current = requestAnimationFrame(animateOrbit);
+    return () => cancelAnimationFrame(orbitRequestRef.current);
+  }, []);
+
   const getPageX = (e) => {
     if (e.type.includes('mouse')) return e.pageX;
     if (e.type.includes('touch')) return e.touches[0].pageX;
@@ -172,7 +187,6 @@ const HosilimLanding = () => {
         currentX.current += velocity.current;
       }
       
-      // 🚀 MUHIM: Barmog'imiz orasida ham limitdan chiqsa startX ni to'g'rilash (Sakrashni yo'qotadi)
       if (currentX.current <= -oneSetWidth * 2) {
         currentX.current += oneSetWidth;
         if (isDragging.current) startX.current -= oneSetWidth;
@@ -219,7 +233,6 @@ const HosilimLanding = () => {
         bCurrentX.current += (bTargetX.current - bCurrentX.current) * 0.15;
       }
       
-      // 🚀 MUHIM: Sakrashda StartX ni o'zgartirish orqali Touch qotib qolishini davolaymiz
       if (bTargetX.current > -SET_WIDTH + bItemWidth.current) {
         bTargetX.current -= SET_WIDTH;
         bCurrentX.current -= SET_WIDTH;
@@ -303,7 +316,6 @@ const HosilimLanding = () => {
         pCurrentX.current += (pTargetX.current - pCurrentX.current) * 0.15;
       }
       
-      // 🚀 MUHIM: Sakrashda StartX ni o'zgartirish
       if (pTargetX.current > -SET_WIDTH + pItemWidth.current) {
         pTargetX.current -= SET_WIDTH;
         pCurrentX.current -= SET_WIDTH;
@@ -356,7 +368,6 @@ const HosilimLanding = () => {
     return () => clearInterval(interval);
   }, [pIsPaused, isPricingPageOpen]);
 
-  // Sichqoncha Eventlari (Touch o'rnatildi)
   const onMouseDown = (e) => { isDragging.current = true; startX.current = getPageX(e) - currentX.current; lastMouseX.current = getPageX(e); if (trackRef.current) trackRef.current.style.cursor = 'grabbing';};
   const onMouseMove = (e) => { if (!isDragging.current) return; currentX.current = getPageX(e) - startX.current; velocity.current = getPageX(e) - lastMouseX.current; lastMouseX.current = getPageX(e); };
   const onMouseUp = () => { isDragging.current = false; if (trackRef.current) trackRef.current.style.cursor = 'grab'; };
@@ -375,10 +386,38 @@ const HosilimLanding = () => {
     setMobileOpen(false);
   };
   
-  // Tashqi linkga yo'naltirish
   const handleAuth = () => {
     window.location.href = 'https://www.my.hosilim.uz/dashboard';
   };
+
+  // 🚀 Har bir karta uchun 3D orbitadagi o'rnini hisoblash funksiyasi
+  const getCardStyle = (index) => {
+    // 3 ta karta bo'lgani uchun har biri orasidagi burchak 120 daraja (360/3)
+    const angle = (orbitAngle + index * 120) * (Math.PI / 180);
+    
+    // Radiuslar (orbitaning kengligi va balandligi)
+    const radiusX = window.innerWidth >= 768 ? 350 : 180; // Kenglik
+    const radiusZ = window.innerWidth >= 768 ? 150 : 80;  // Chuqurlik (Kattalashish/Kichrayish uchun)
+
+    // X va Z o'qlari bo'yicha hisoblash
+    const x = Math.sin(angle) * radiusX;
+    const z = Math.cos(angle) * radiusZ;
+
+    // Orqadagi element kichikroq va xiraroq, oldindagisi katta va tiniq
+    const scale = 1 + (z / radiusZ) * 0.15; 
+    const opacity = 0.5 + ((z + radiusZ) / (2 * radiusZ)) * 0.5;
+    const zIndex = Math.round(z + radiusZ);
+
+    return {
+      transform: `translate3d(${x}px, 0, ${z}px) scale(${scale})`,
+      opacity: opacity,
+      zIndex: zIndex,
+      transition: 'none' // JS orqali silliq harakatlanayotgani uchun CSS transition xalaqit bermasligi kerak
+    };
+  };
+
+  // Kartalarning barchasi bir xil o'lchamda bo'lishi uchun umumiy klaslar:
+  const orbitCardBaseClasses = "absolute w-[280px] sm:w-[350px] h-[230px] sm:h-[260px] flex flex-col justify-between bg-black/40 backdrop-blur-2xl rounded-[2.5rem] p-6 border border-white/20 shadow-[0_30px_60px_rgba(0,0,0,0.6)] cursor-pointer";
 
   return (
     <div 
@@ -564,92 +603,115 @@ const HosilimLanding = () => {
         </header>
 
         {/* ASOSIY EKRAN (HERO) */}
-        <section className="pb-16 sm:pb-20 px-4 text-center relative min-h-[90vh] flex flex-col justify-start">
-          <div className="relative z-10">
+        <section className="pb-16 sm:pb-20 px-4 text-center relative min-h-[90vh] flex flex-col justify-center items-center overflow-hidden">
+          
+          <div className="relative z-10 w-full flex flex-col items-center">
             
-            <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 py-1.5 sm:px-4 sm:py-2 backdrop-blur-md border rounded-2xl sm:rounded-full text-[10px] sm:text-sm leading-snug font-bold mb-6 sm:mb-8 shadow-lg cursor-default transition-colors mx-auto max-w-[90%] sm:max-w-none text-center bg-white/10 border-white/20 text-green-300 hover:bg-white/20">
-                <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" /> 
-                <span>O'zbekistondagi yagona bog'dorchilikni raqamlashtirish platformasi.</span>
+            <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-2 backdrop-blur-md border rounded-full text-xs sm:text-sm leading-snug font-bold mb-6 shadow-lg cursor-default transition-colors text-center bg-white/10 border-white/20 text-green-300 hover:bg-white/20">
+                <CheckCircle2 className="w-4 h-4 shrink-0" /> 
+                <span>O'zbekistondagi yagona raqamli agro platforma.</span>
             </div>
             
-            <h1 className="text-3xl sm:text-5xl md:text-6xl font-black mb-6 leading-tight max-w-5xl mx-auto drop-shadow-xl text-white">
-              <span className="text-transparent bg-clip-text drop-shadow-md bg-gradient-to-r from-green-400 to-green-200">
+            <h1 className="text-4xl sm:text-6xl md:text-7xl font-black mb-6 leading-tight max-w-5xl drop-shadow-2xl text-white">
+              <span className="text-transparent bg-clip-text bg-gradient-to-br from-white via-green-100 to-green-500 drop-shadow-md">
                 Hosilni to'liq raqamlashtirish vaqti keldi.
               </span>
             </h1>
-            <p className="text-base sm:text-lg max-w-3xl mx-auto mb-10 font-medium leading-relaxed drop-shadow-lg text-white/90">
-              Yo'qolgan ma'lumotlar, daftardagi xatolar va soatlab vaqt sarflanadigan hisob-kitoblarga barham bering. Barchasi uchun ushbu platforma yetarli.
+            <p className="text-base sm:text-xl max-w-2xl mb-12 font-medium leading-relaxed drop-shadow-lg text-white/80">
+              Yo'qolgan ma'lumotlar, daftardagi xatolar va soatlab vaqt sarflanadigan hisob-kitoblarga barham bering.
             </p>
             
-            <button onClick={handleAuth} className="px-6 sm:px-8 py-3 sm:py-4 bg-green-600 text-white font-bold rounded-xl shadow-xl shadow-green-600/30 flex items-center gap-2 mx-auto hover:bg-green-500 transition-transform hover:-translate-y-1 text-sm sm:text-base border border-green-500/50">
-              Hoziroq boshlash <ArrowRight size={20} />
+            <button onClick={handleAuth} className="px-8 py-4 bg-green-600 text-white font-bold rounded-full shadow-[0_0_40px_rgba(22,163,74,0.4)] flex items-center gap-3 hover:bg-green-500 transition-all hover:-translate-y-1 hover:shadow-[0_0_60px_rgba(22,163,74,0.6)] text-base sm:text-lg border border-green-400/50 mb-4 sm:mb-10">
+              Hoziroq boshlash <ArrowUpRight size={24} />
             </button>
 
-            {/* DASHBOARD MOCKUP */}
-            <div className="mt-12 sm:mt-16 relative max-w-5xl mx-auto group">
-                <div className="backdrop-blur-xl rounded-[2.5rem] sm:rounded-[3rem] p-3 sm:p-5 border-[2px] sm:border-[4px] relative transition-transform duration-500 group-hover:-translate-y-2 bg-black/40 shadow-[0_30px_60px_rgba(0,0,0,0.6)] border-white/10">
-                   
-                   <div className="absolute top-1.5 sm:top-2 left-1/2 -translate-x-1/2 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full hidden sm:block z-20 bg-[#111] border border-white/10"></div>
-
-                   <div className="bg-gray-50 rounded-[1.5rem] sm:rounded-[2rem] overflow-hidden flex flex-col relative border border-gray-200 w-full h-full text-gray-900 shadow-inner">
-                      <div className="h-10 sm:h-12 border-b border-gray-200 flex items-center px-4 gap-4 bg-white shrink-0">
-                        <div className="flex gap-2">
-                          <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-red-400"></div>
-                          <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-yellow-400"></div>
-                          <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-green-400"></div>
-                        </div>
-                        <div className="text-[10px] sm:text-xs font-bold text-gray-400 text-left">Hosilim.uz / Broker Dashboard</div>
+            {/* 🔥 YUKSAK DARAJADAGI 3D ORBITA (AYLANMA KARTALAR) 🔥 */}
+            {/* 🚀 O'ZGARISH: Faqat bosib turilganda to'xtaydi */}
+            <div 
+              className="relative w-full max-w-5xl mx-auto h-[350px] sm:h-[450px] flex items-center justify-center mt-4 perspective-[1500px]"
+              onMouseDown={() => isOrbitHeld.current = true}
+              onMouseUp={() => isOrbitHeld.current = false}
+              onMouseLeave={() => isOrbitHeld.current = false}
+              onTouchStart={() => isOrbitHeld.current = true}
+              onTouchEnd={() => isOrbitHeld.current = false}
+            >
+                
+                {/* 1-Karta: Karzinkalar */}
+                <div 
+                  className={orbitCardBaseClasses}
+                  style={getCardStyle(0)}
+                >
+                   <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 rounded-2xl bg-blue-500/20 flex items-center justify-center border border-blue-500/30 text-blue-400">
+                        <Box size={28} />
                       </div>
-
-                      <div className="flex-1 flex p-4 md:p-6 gap-6 bg-gray-50">
-                        <div className="w-64 hidden md:block space-y-3 text-left">
-                          <div className="h-10 bg-green-100 rounded-lg w-full"></div>
-                          <div className="h-10 bg-white border border-gray-200 rounded-lg w-full"></div>
-                          <div className="h-10 bg-white border border-gray-200 rounded-lg w-full"></div>
-                          <div className="h-10 bg-white border border-gray-200 rounded-lg w-full mt-8"></div>
-                        </div>
-                        <div className="flex-1 space-y-4 overflow-x-auto pb-2">
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 min-w-[350px] sm:min-w-[500px]">
-                            <div className="bg-white rounded-xl border border-gray-200 p-3 sm:p-4 shadow-sm text-left">
-                               <div className="text-[10px] sm:text-xs text-gray-500 font-bold uppercase mb-1 flex items-center gap-2"><Box size={14} className="text-green-500"/> Karzinkalar balansi</div>
-                               <div className="text-lg sm:text-2xl font-black text-gray-800">2,450 <span className="text-xs sm:text-sm font-medium text-red-500">-120 qarzda</span></div>
-                            </div>
-                            <div className="bg-white rounded-xl border border-gray-200 p-3 sm:p-4 shadow-sm text-left">
-                               <div className="text-[10px] sm:text-xs text-gray-500 font-bold uppercase mb-1 flex items-center gap-2"><TrendingUp size={14} className="text-blue-500"/> Qabul qilingan hosil</div>
-                               <div className="text-lg sm:text-2xl font-black text-gray-800">48.5 <span className="text-xs sm:text-sm font-medium text-gray-500">tonna</span></div>
-                            </div>
-                            <div className="bg-white rounded-xl border border-gray-200 p-3 sm:p-4 shadow-sm hidden md:block text-left">
-                               <div className="text-xs text-gray-500 font-bold uppercase mb-1 flex items-center gap-2"><Calculator size={14} className="text-purple-500"/> Bog'bonlarga to'lov</div>
-                               <div className="text-2xl font-black text-gray-800">142M <span className="text-sm font-medium text-gray-500">so'm</span></div>
-                            </div>
-                          </div>
-                          <div className="bg-white rounded-xl border border-gray-200 p-4 h-40 sm:h-48 shadow-sm flex flex-col min-w-[350px] sm:min-w-[500px]">
-                            <div className="h-8 border-b border-gray-100 flex items-center gap-4 mb-2">
-                               <div className="h-2 sm:h-3 w-16 sm:w-24 bg-gray-200 rounded"></div>
-                               <div className="h-2 sm:h-3 w-10 sm:w-16 bg-gray-200 rounded"></div>
-                            </div>
-                            <div className="space-y-3 mt-2">
-                               {[1,2,3].map(i => (
-                                 <div key={i} className="flex items-center gap-3 sm:gap-4 text-left">
-                                   <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gray-100"></div>
-                                   <div className="h-2 sm:h-3 w-24 sm:w-32 bg-gray-100 rounded"></div>
-                                   <div className="h-2 sm:h-3 w-12 sm:w-16 bg-green-50 text-green-500 rounded ml-auto"></div>
-                                 </div>
-                               ))}
-                            </div>
-                          </div>
-                        </div>
+                      <div className="text-left">
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Karzinkalar</p>
+                        <p className="text-2xl font-black text-white">4,250 <span className="text-sm font-medium text-blue-400">dona</span></p>
                       </div>
                    </div>
+                   <div className="space-y-3 mt-auto">
+                     <div className="w-full h-3 bg-white/10 rounded-full overflow-hidden">
+                       <div className="w-[70%] h-full bg-blue-500 rounded-full"></div>
+                     </div>
+                     <p className="text-xs font-medium text-gray-400 text-left">Bugungi tarqatilgan karzinkalar</p>
+                   </div>
                 </div>
-                
-                <div className="absolute -bottom-4 -right-2 sm:-bottom-8 sm:-right-8 backdrop-blur-xl p-3 sm:p-4 rounded-xl sm:rounded-2xl border animate-bounce z-20 bg-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.5)] border-white/20" style={{animationDuration: '3s'}}>
-                  <div className="flex items-center gap-2 sm:gap-3 text-left">
-                    <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full flex items-center justify-center border bg-green-500/20 text-green-400 border-green-400/30"><ShieldCheck className="w-4 h-4 sm:w-6 sm:h-6" /></div>
-                    <div><p className="text-[9px] sm:text-xs font-bold uppercase text-gray-300">Ma'lumotlar</p><p className="text-xs sm:text-sm font-black text-white">100% Xavfsiz</p></div>
-                  </div>
+
+                {/* 2-Karta: Tushum */}
+                <div 
+                  className={orbitCardBaseClasses}
+                  style={getCardStyle(1)}
+                >
+                   <div className="flex justify-between items-start">
+                     <div className="w-14 h-14 rounded-2xl bg-green-500/20 flex items-center justify-center border border-green-500/30 text-green-400">
+                        <TrendingUp size={28} />
+                      </div>
+                      <span className="px-3 py-1 bg-green-500/20 text-green-400 text-xs font-bold rounded-full border border-green-500/30">+12.5%</span>
+                   </div>
+                   <div className="text-left mt-2">
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Jami kunlik tushum</p>
+                      <h2 className="text-4xl font-black text-white drop-shadow-md">18.7 <span className="text-xl font-bold text-gray-400">tonna</span></h2>
+                   </div>
+                   <div className="flex items-end gap-1.5 h-12 w-full mt-auto">
+                      {[40, 60, 45, 80, 55, 90, 75].map((h, i) => (
+                        <div key={i} className="flex-1 bg-gradient-to-t from-green-500/80 to-green-300/80 rounded-sm" style={{height: `${h}%`}}></div>
+                      ))}
+                   </div>
                 </div>
+
+                {/* 3-Karta: Hisob-kitob */}
+                <div 
+                  className={orbitCardBaseClasses}
+                  style={getCardStyle(2)}
+                >
+                   <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 rounded-2xl bg-purple-500/20 flex items-center justify-center border border-purple-500/30 text-purple-400">
+                        <Calculator size={28} />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Hisob-kitob</p>
+                        <p className="text-2xl font-black text-white">134M <span className="text-sm font-medium text-purple-400">so'm</span></p>
+                      </div>
+                   </div>
+                   <div className="space-y-4 mt-auto">
+                     <div className="flex items-center gap-3">
+                       <div className="w-8 h-8 rounded-full bg-white/10"></div>
+                       <div className="flex-1 h-3 bg-white/10 rounded-full"></div>
+                       <CheckCircle2 size={18} className="text-green-400"/>
+                     </div>
+                     <div className="flex items-center gap-3">
+                       <div className="w-8 h-8 rounded-full bg-white/10"></div>
+                       <div className="flex-1 h-3 bg-white/10 rounded-full"></div>
+                       <Clock size={18} className="text-yellow-400"/>
+                     </div>
+                   </div>
+                </div>
+
+                {/* Markaziy yorug'lik effekti (Glow) */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] sm:w-[500px] sm:h-[500px] bg-green-500/20 blur-[120px] rounded-full pointer-events-none -z-10"></div>
             </div>
+
           </div>
         </section>
 
