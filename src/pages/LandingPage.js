@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import {
-  Calculator, Warehouse, TrendingUp, CheckCircle2, Menu, X, ArrowRight,
+  Calculator, Warehouse, TrendingUp, CheckCircle2, Menu, X, 
   ShieldCheck, Truck, Box, XOctagon, Clock, Printer, History, Users, MonitorSmartphone,
   Play, Pause, ArrowUpRight
 } from 'lucide-react';
