@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   Calculator, Warehouse, TrendingUp, CheckCircle2, Menu, X, ArrowRight,
   ShieldCheck, Truck, Box, XOctagon, Clock, Printer, History, Users, MonitorSmartphone,
