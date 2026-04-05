@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+
 import {
   Calculator, Warehouse, TrendingUp, CheckCircle2, Menu, X, ArrowRight,
   ShieldCheck, Truck, Box, XOctagon, Clock, Printer, History, Users, MonitorSmartphone,
@@ -109,7 +109,7 @@ const infinitePricing = [...pricingData, ...pricingData, ...pricingData];
 
 
 const HosilimLanding = () => {
-  const navigate = useNavigate();
+
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [isPricingPageOpen, setIsPricingPageOpen] = useState(false);
